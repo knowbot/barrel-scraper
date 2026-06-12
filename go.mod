@@ -16,6 +16,7 @@ require (
 	github.com/antchfx/xmlquery v1.5.1 // indirect
 	github.com/antchfx/xpath v1.3.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fyne-io/gl-js v0.2.0 // indirect
@@ -30,16 +31,20 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
 	github.com/hack-pad/safejs v0.1.0 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/kr/text v0.1.0 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.17 // indirect
+	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.5.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rymdport/portal v0.4.2 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
@@ -55,4 +60,8 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	modernc.org/libc v1.72.3 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.11.0 // indirect
+	modernc.org/sqlite v1.52.0 // indirect
 )
