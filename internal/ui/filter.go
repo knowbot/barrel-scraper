@@ -60,7 +60,10 @@ func NewFilter() *Filter {
 		f.selected.Category = &c
 		f.selected.SubCategory = nil
 		populateSelect(f.subCategorySelect, c.SubCategories)
-		f.OnChanged(f.selected)
+		if f.OnChanged != nil {
+			f.OnChanged(f.selected)
+		}
+
 	}
 
 	f.subCategorySelect.OnChanged = func(selected string) {
@@ -69,7 +72,9 @@ func NewFilter() *Filter {
 			return
 		}
 		f.selected.SubCategory = &f.selected.Category.SubCategories[i]
-		f.OnChanged(f.selected)
+		if f.OnChanged != nil {
+			f.OnChanged(f.selected)
+		}
 	}
 
 	f.regionSelect.OnChanged = func(selected string) {
@@ -81,7 +86,9 @@ func NewFilter() *Filter {
 		f.selected.Region = &r
 		f.selected.Province = nil
 		populateSelect(f.provinceSelect, r.Provinces)
-		f.OnChanged(f.selected)
+		if f.OnChanged != nil {
+			f.OnChanged(f.selected)
+		}
 	}
 
 	f.provinceSelect.OnChanged = func(selected string) {
@@ -90,7 +97,9 @@ func NewFilter() *Filter {
 			return
 		}
 		f.selected.Province = &f.selected.Region.Provinces[i]
-		f.OnChanged(f.selected)
+		if f.OnChanged != nil {
+			f.OnChanged(f.selected)
+		}
 	}
 
 	catLabel := widget.NewLabel("Per categoria:")

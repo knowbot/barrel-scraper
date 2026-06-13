@@ -3,6 +3,11 @@ CREATE TABLE IF NOT EXISTS categories (
     name VARCHAR NOT NULL UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS metadata (
+      key VARCHAR PRIMARY KEY,
+      last_updated VARCHAR NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS subcategories (
     id INTEGER PRIMARY KEY,
     name VARCHAR NOT NULL UNIQUE,
@@ -26,9 +31,10 @@ CREATE TABLE IF NOT EXISTS companies (
     streetAddr VARCHAR NOT NULL,
     cap VARCHAR NOT NULL,
     city VARCHAR NOT NULL,
+    phone VARCHAR,
+    fax VARCHAR,
+    website VARCHAR,
     province_id INTEGER NOT NULL,
     subcategory_id INTEGER NOT NULL,
     CONSTRAINT fk_province FOREIGN KEY (province_id) REFERENCES provinces (id) CONSTRAINT fk_subcategory FOREIGN KEY (subcategory_id) REFERENCES subcategories (id)
 );
-
-CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
