@@ -1,6 +1,10 @@
-package main
+package service
+
+// Scraper - what fetches the data
 
 import (
+	"barrel-scraper/internal/model"
+	"barrel-scraper/internal/utils"
 	"fmt"
 	"strings"
 
@@ -28,21 +32,21 @@ func isBrandCategory(s string) bool {
 	return false
 }
 
-func fetchCategories() ([]Category, error) {
-	var fetchRes []Category
+func FetchCategories() ([]model.Category, error) {
+	var fetchRes []model.Category
 	var fetchErr error
 	scraper := colly.NewCollector()
 	extensions.RandomUserAgent(scraper)
 	scraper.OnHTML("div.elenco-directory", func(e *colly.HTMLElement) {
-		c := Category{Name: cleanText(e.ChildText("h2"))}
+		c := model.Category{Name: utils.CleanText(e.ChildText("h2"))}
 		e.ForEach("a[href]", func(_ int, a *colly.HTMLElement) {
-			text := cleanText(a.Text)
+			text := utils.CleanText(a.Text)
 			if isBrandCategory(text) {
 				return
 			}
 			c.SubCategories = append(
 				c.SubCategories,
-				SubCategory{
+				model.SubCategory{
 					Name: text,
 					URL:  a.Attr("href"),
 				},
@@ -51,14 +55,14 @@ func fetchCategories() ([]Category, error) {
 		fetchRes = append(fetchRes, c)
 	})
 	scraper.OnError(func(r *colly.Response, e error) {
-		fetchErr = fmt.Errorf("Request %s failed with status %d: %w", r.Request.URL, r.StatusCode, e)
+		fetchErr = fmt.Errorf("request %s failed with status %d: %w", r.Request.URL, r.StatusCode, e)
 	})
 	scraper.Visit(baseURL)
 	if fetchErr != nil {
 		return nil, fetchErr
 	}
 	if len(fetchRes) == 0 {
-		return nil, fmt.Errorf("No categories at %s (selector matched nothing)", baseURL)
+		return nil, fmt.Errorf("no categories at %s (selector matched nothing)", baseURL)
 	}
 	return fetchRes, nil
 }

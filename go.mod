@@ -1,4 +1,4 @@
-module scraper
+module barrel-scraper
 
 go 1.26.4
 

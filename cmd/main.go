@@ -1,6 +1,10 @@
 package main
 
 import (
+	"barrel-scraper/internal/model"
+	"barrel-scraper/internal/service"
+	"barrel-scraper/internal/ui"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/widget"
@@ -12,22 +16,20 @@ func main() {
 	w.Resize(fyne.NewSize(800, 400))
 
 	go func() {
-		var ff *FilterForm
+		var ff *ui.Filter
 		fyne.Do(func() {
-			ff = NewFilterForm()
-			w.SetContent(ff.container)
+			ff = ui.NewFilter()
+			w.SetContent(ff.Container)
 		})
-		categories, err := fetchCategories()
+		categories, err := service.FetchCategories()
 		fyne.Do(func() {
 			if err != nil || len(categories) == 0 {
 				w.SetContent(widget.NewLabel("No categories found."))
 				return
 			}
-			PopulateFilterForm(ff, categories)
+			ff.Populate(categories, []model.Region{})
 		})
 	}()
 
-	w.Show()
-	a.Run()
-
+	w.ShowAndRun()
 }

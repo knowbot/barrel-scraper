@@ -28,8 +28,7 @@ CREATE TABLE IF NOT EXISTS companies (
     city VARCHAR NOT NULL,
     province_id INTEGER NOT NULL,
     subcategory_id INTEGER NOT NULL,
-    CONSTRAINT fk_province FOREIGN KEY (province_id) REFERENCES provinces (id)
-    CONSTRAINT fk_subcategory FOREIGN KEY (subcategory_id) REFERENCES subcategories (id)
+    CONSTRAINT fk_province FOREIGN KEY (province_id) REFERENCES provinces (id) CONSTRAINT fk_subcategory FOREIGN KEY (subcategory_id) REFERENCES subcategories (id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_subcat ON companies (subcat);
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
