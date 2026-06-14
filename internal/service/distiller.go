@@ -3,7 +3,6 @@ package service
 import (
 	"barrel-scraper/internal/model"
 	"barrel-scraper/internal/storage"
-	"fmt"
 	"time"
 )
 
@@ -25,7 +24,6 @@ func (d *Distiller) Close() error {
 
 func (d *Distiller) GetCategories() ([]model.Category, error) {
 	needFetch, err := d.HasStaleData("categories")
-	fmt.Println(needFetch)
 	if err != nil {
 		return nil, err
 	}

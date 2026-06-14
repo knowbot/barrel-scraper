@@ -112,14 +112,20 @@ func NewFilter() *Filter {
 		}
 	}
 
-	forms := container.NewGridWithColumns(2,
+	industry := widget.NewForm(
+		widget.NewFormItem("Categoria *", f.categorySelect),
+		widget.NewFormItem("Sottocategoria *", f.subCategorySelect),
+	)
+
+	location := widget.NewForm(
+		widget.NewFormItem("Regione", f.regionSelect),
+		widget.NewFormItem("Provincia", f.provinceSelect),
+	)
+
+	forms := container.NewGridWrap(fyne.NewSize(420, 680),
 		container.NewVBox(
-			container.NewVBox(widget.NewLabel("Categoria"), f.categorySelect),
-			container.NewVBox(widget.NewLabel("Sottocategoria"), f.subCategorySelect),
-		),
-		container.NewVBox(
-			container.NewVBox(widget.NewLabel("Regione"), f.regionSelect),
-			container.NewVBox(widget.NewLabel("Provincia"), f.provinceSelect),
+			industry,
+			location,
 		),
 	)
 
