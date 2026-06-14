@@ -5,13 +5,15 @@ type Named interface {
 }
 
 type Category struct {
+	ID            int64
 	Name          string
 	SubCategories []SubCategory
 }
 
-func (c Category) GetName() string { return c.Name }
+func (ca Category) GetName() string { return ca.Name }
 
 type SubCategory struct {
+	ID   int64
 	Name string
 	URL  string
 }
@@ -19,18 +21,35 @@ type SubCategory struct {
 func (sc SubCategory) GetName() string { return sc.Name }
 
 type Region struct {
+	ID        int64
 	Name      string
 	Provinces []Province
 }
 
-func (r Region) GetName() string { return r.Name }
+func (re Region) GetName() string { return re.Name }
 
 type Province struct {
+	ID   int64
 	Name string
 	Code string
 }
 
-func (p Province) GetName() string { return p.Name }
+func (pr Province) GetName() string { return pr.Name }
+
+type Company struct {
+	ID            int64
+	Sector        string
+	Name          string
+	StreetAddress string
+	CAP           string
+	City          string
+	Province      string
+	Phone         string
+	Fax           string
+	Website       string
+}
+
+func (co Company) GetName() string { return co.Name }
 
 func BuildMap[T Named](items []T) map[string]T {
 	m := make(map[string]T, len(items))

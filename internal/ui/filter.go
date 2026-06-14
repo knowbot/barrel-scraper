@@ -15,11 +15,13 @@ type Filter struct {
 	subCategorySelect *widget.Select
 	regionSelect      *widget.Select
 	provinceSelect    *widget.Select
+	resetButton       *widget.Button
+	exportButton      *widget.Button
 
 	categories []model.Category
 	regions    []model.Region
 
-	selected  FilterSelection
+	Selected  FilterSelection
 	OnChanged func(FilterSelection)
 }
 
@@ -37,13 +39,21 @@ func NewFilter() *Filter {
 		subCategorySelect: widget.NewSelect(nil, nil),
 		regionSelect:      widget.NewSelect(nil, nil),
 		provinceSelect:    widget.NewSelect(nil, nil),
+		exportButton:      widget.NewButton("Esporta", nil),
 	}
 
+	f.resetButton = widget.NewButton("Reset", func() {
+		f.categorySelect.ClearSelected()
+		f.subCategorySelect.ClearSelected()
+		f.regionSelect.ClearSelected()
+		f.provinceSelect.ClearSelected()
+	})
+
 	// Init with placeholder
-	f.categorySelect.PlaceHolder = "Categoria"
-	f.subCategorySelect.PlaceHolder = "Sottocategoria"
-	f.regionSelect.PlaceHolder = "Regione"
-	f.provinceSelect.PlaceHolder = "Provincia"
+	f.categorySelect.PlaceHolder = "Seleziona..."
+	f.subCategorySelect.PlaceHolder = "Seleziona..."
+	f.regionSelect.PlaceHolder = "Seleziona..."
+	f.provinceSelect.PlaceHolder = "Seleziona..."
 
 	f.categorySelect.Disable()
 	f.subCategorySelect.Disable()
@@ -56,12 +66,12 @@ func NewFilter() *Filter {
 		if i < 0 {
 			return
 		}
-		c := f.categories[i]
-		f.selected.Category = &c
-		f.selected.SubCategory = nil
-		populateSelect(f.subCategorySelect, c.SubCategories)
+		ca := f.categories[i]
+		f.Selected.Category = &ca
+		f.Selected.SubCategory = nil
+		populateSelect(f.subCategorySelect, ca.SubCategories)
 		if f.OnChanged != nil {
-			f.OnChanged(f.selected)
+			f.OnChanged(f.Selected)
 		}
 
 	}
@@ -71,9 +81,9 @@ func NewFilter() *Filter {
 		if i < 0 {
 			return
 		}
-		f.selected.SubCategory = &f.selected.Category.SubCategories[i]
+		f.Selected.SubCategory = &f.Selected.Category.SubCategories[i]
 		if f.OnChanged != nil {
-			f.OnChanged(f.selected)
+			f.OnChanged(f.Selected)
 		}
 	}
 
@@ -82,12 +92,12 @@ func NewFilter() *Filter {
 		if i < 0 {
 			return
 		}
-		r := f.regions[i]
-		f.selected.Region = &r
-		f.selected.Province = nil
-		populateSelect(f.provinceSelect, r.Provinces)
+		re := f.regions[i]
+		f.Selected.Region = &re
+		f.Selected.Province = nil
+		populateSelect(f.provinceSelect, re.Provinces)
 		if f.OnChanged != nil {
-			f.OnChanged(f.selected)
+			f.OnChanged(f.Selected)
 		}
 	}
 
@@ -96,20 +106,31 @@ func NewFilter() *Filter {
 		if i < 0 {
 			return
 		}
-		f.selected.Province = &f.selected.Region.Provinces[i]
+		f.Selected.Province = &f.Selected.Region.Provinces[i]
 		if f.OnChanged != nil {
-			f.OnChanged(f.selected)
+			f.OnChanged(f.Selected)
 		}
 	}
 
-	catLabel := widget.NewLabel("Per categoria:")
-	locLabel := widget.NewLabel("Per luogo:")
+	forms := container.NewGridWithColumns(2,
+		container.NewVBox(
+			container.NewVBox(widget.NewLabel("Categoria"), f.categorySelect),
+			container.NewVBox(widget.NewLabel("Sottocategoria"), f.subCategorySelect),
+		),
+		container.NewVBox(
+			container.NewVBox(widget.NewLabel("Regione"), f.regionSelect),
+			container.NewVBox(widget.NewLabel("Provincia"), f.provinceSelect),
+		),
+	)
 
-	f.Container = container.NewGridWithColumns(2, container.NewVBox(catLabel, f.categorySelect, f.subCategorySelect), container.NewVBox(locLabel, f.regionSelect, f.provinceSelect))
+	f.Container = container.NewVBox(
+		forms,
+		container.NewHBox(f.resetButton, f.exportButton),
+	)
 	return f
 }
 
-func (f *Filter) Selection() FilterSelection { return f.selected }
+func (f *Filter) Selection() FilterSelection { return f.Selected }
 
 func (f *Filter) Populate(categories []model.Category, regions []model.Region) {
 	f.categories = categories

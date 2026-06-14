@@ -1,7 +1,6 @@
 package main
 
 import (
-	"barrel-scraper/internal/model"
 	"barrel-scraper/internal/service"
 	"barrel-scraper/internal/ui"
 	"fmt"
@@ -33,8 +32,13 @@ func main() {
 			fmt.Print(err)
 		}
 
+		regions, err := distiller.GetRegions()
+		if err != nil {
+			fmt.Print(err)
+		}
+
 		fyne.Do(func() {
-			filter.Populate(categories, []model.Region{})
+			filter.Populate(categories, regions)
 		})
 	}()
 

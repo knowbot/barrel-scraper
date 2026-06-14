@@ -16,14 +16,21 @@ CREATE TABLE IF NOT EXISTS subcategories (
     CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories (id)
 );
 
+CREATE TABLE IF NOT EXISTS regions (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS provinces (
     id INTEGER PRIMARY KEY,
     name VARCHAR NOT NULL,
     code CHAR(2) NOT NULL UNIQUE,
-    region VARCHAR NOT NULL
+    region_id INTEGER NOT NULL,
+    CONSTRAINT fk_region FOREIGN KEY (region_id) REFERENCES regions (id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_region ON provinces (region);
+CREATE INDEX IF NOT EXISTS idx_province_code ON provinces (code);
+CREATE INDEX IF NOT EXISTS idx_province_region ON provinces (region_id);
 
 CREATE TABLE IF NOT EXISTS companies (
     id INTEGER PRIMARY KEY,
@@ -36,5 +43,6 @@ CREATE TABLE IF NOT EXISTS companies (
     website VARCHAR,
     province_id INTEGER NOT NULL,
     subcategory_id INTEGER NOT NULL,
-    CONSTRAINT fk_province FOREIGN KEY (province_id) REFERENCES provinces (id) CONSTRAINT fk_subcategory FOREIGN KEY (subcategory_id) REFERENCES subcategories (id)
+    CONSTRAINT fk_province FOREIGN KEY (province_id) REFERENCES provinces (id),
+    CONSTRAINT fk_subcategory FOREIGN KEY (subcategory_id) REFERENCES subcategories (id)
 );
