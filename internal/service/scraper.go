@@ -6,7 +6,10 @@ import (
 	"barrel-scraper/internal/model"
 	"barrel-scraper/internal/utils"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -15,26 +18,29 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func createCollector() *colly.Collector {
-	c := colly.NewCollector()
-	extensions.RandomUserAgent(c)
-	c.Limit(&colly.LimitRule{
-		DomainGlob:  "beverfood.com",
-		Delay:       250 * time.Millisecond,
-		RandomDelay: 100 * time.Millisecond,
-		Parallelism: 10,
-	})
-	c.Async = true
-	return c
-}
-
 var baseURL string = "https://www.beverfood.com/directory-aziende-beverage/"
 
 var brandWords = map[string]bool{
 	"marca": true, "marchio": true, "marche": true, "marchi": true,
 }
 
-// Legacy code: use when not relying on a sitemap
+func createCollector(async bool) *colly.Collector {
+	c := colly.NewCollector()
+	extensions.RandomUserAgent(c)
+	extensions.Referer(c)
+	c.Limit(&colly.LimitRule{
+		DomainGlob:  "*beverfood.*",
+		Delay:       2000 * time.Millisecond,
+		RandomDelay: 2000 * time.Millisecond,
+	})
+	c.CacheDir = "./.cache/colly"
+	c.IgnoreRobotsTxt = true
+	c.Async = async
+	c.OnError(func(r *colly.Response, e error) {
+		fmt.Printf("request %s failed with status %d: %v", r.Request.URL, r.StatusCode, e)
+	})
+	return c
+}
 
 func isBrandCategory(s string) bool {
 	s = strings.ToLower(s)
@@ -49,9 +55,8 @@ func isBrandCategory(s string) bool {
 }
 
 func FetchCategories() ([]model.Category, error) {
-	var fetchRes []model.Category
-	var fetchErr error
-	scraper := createCollector()
+	categories := make([]model.Category, 0)
+	scraper := createCollector(false)
 	scraper.OnHTML("div.elenco-directory", func(e *colly.HTMLElement) {
 		c := model.Category{Name: utils.CleanText(e.ChildText("h2"))}
 		e.ForEach("a[href]", func(_ int, a *colly.HTMLElement) {
@@ -67,87 +72,114 @@ func FetchCategories() ([]model.Category, error) {
 				},
 			)
 		})
-		fetchRes = append(fetchRes, c)
+		categories = append(categories, c)
 	})
-	scraper.OnError(func(r *colly.Response, e error) {
-		fetchErr = fmt.Errorf("request %s failed with status %d: %w", r.Request.URL, r.StatusCode, e)
-	})
-	scraper.Visit(baseURL)
-	if fetchErr != nil {
-		return nil, fetchErr
+	if err := scraper.Visit(baseURL); err != nil {
+		return nil, err
 	}
-	if len(fetchRes) == 0 {
+	if len(categories) == 0 {
 		return nil, fmt.Errorf("no categories at %s (selector matched nothing)", baseURL)
 	}
-	return fetchRes, nil
+	return categories, nil
 }
 
-// func FetchCompanyUrls(durl string) ([]model.Company, error) {
-// 	scraper := createCollector()
-// 	extensions.RandomUserAgent(scraper)
-// 	company_urls := make([]string, 0)
-// 	letter_index_urls, err := FetchLetterIndexURLs(durl)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("letter index fetch failed: %w", err)
-// 	}
-// 	fmt.Println(len(letter_index_urls))
-// 	if len(letter_index_urls) > 0 {
-// 		for _, li_url := range letter_index_urls {
-// 			res, err := FetchCompanyURLs(li_url)
-// 			if err != nil {
-// 				return nil, fmt.Errorf("direct fetch failed: %w", err)
-// 			}
-// 			company_urls = append(company_urls, res...)
-// 		}
+func FetchCompanyURLs(durl string) ([]string, error) {
+	company_urls := make([]string, 0)
+	letter_index_urls, err := FetchLetterIndexURLs(durl)
+	if err != nil {
+		return nil, fmt.Errorf("letter index fetch failed: %w", err)
+	}
+	fmt.Println(len(letter_index_urls))
+	if len(letter_index_urls) > 0 {
+		for _, li_url := range letter_index_urls {
+			res, _ := FetchDirectURLs(li_url)
+			company_urls = append(company_urls, res...)
+		}
 
-// 	} else {
-// 		company_urls, err = FetchCompanyURLs(durl)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("direct fetch failed: %w", err)
-// 		}
-// 	}
-// 	fmt.Println(len(company_urls))
-// 	return nil, nil
-// }
+	} else {
+		company_urls, _ = FetchDirectURLs(durl)
+	}
+	company_urls = utils.RemoveDuplicates(company_urls)
+	fmt.Println(len(company_urls))
+	return company_urls, nil
+}
 
-// func FetchLetterIndexURLs(directoryURL string) ([]string, error) {
-// 	scraper := createCollector()
-// 	letter_urls := make([]string, 0)
-// 	scraper.OnHTML("div.lettere", func(e *colly.HTMLElement) {
-// 		e.ForEach("a:not([class])", func(_ int, a *colly.HTMLElement) {
-// 			if url := a.Attr("href"); url != "" {
-// 				letter_urls = append(letter_urls, url)
-// 			}
-// 		})
-// 	})
-// 	scraper.Visit(directoryURL)
-// 	scraper.Wait()
-// 	return letter_urls, nil
-// }
+func FetchLetterIndexURLs(directoryURL string) ([]string, error) {
+	scraper := createCollector(false)
+	letter_urls := make([]string, 0)
+	scraper.OnHTML("div.lettere", func(e *colly.HTMLElement) {
+		e.ForEach("a:not([class])", func(_ int, a *colly.HTMLElement) {
+			if url := a.Attr("href"); url != "" {
+				letter_urls = append(letter_urls, url)
+			}
+		})
+	})
+	scraper.Visit(directoryURL)
+	return letter_urls, nil
+}
 
-// func FetchCompanyURLs(directoryURL string) ([]string, error) {
+func FetchDirectURLs(directoryURL string) ([]string, error) {
+	// First read is sync
+	// TODO: handle async error
+	var mutex sync.Mutex
+	var fetchErr error
+	urls := make([]string, 0)
+	pages := 1
+	pageParam := "page"
+
+	scanPages := func(e *colly.HTMLElement) {
+		pageNums := e.DOM.Find("a.page-numbers")
+		if pageNums.Length() > 0 {
+			if query, exists := pageNums.Eq(-1).Attr("href"); exists {
+				params, err := url.ParseQuery(strings.TrimPrefix(query, "?"))
+				if err != nil {
+					fetchErr = err
+					return
+				}
+				for k, v := range params {
+					pageParam = k
+					pages, err = strconv.Atoi(v[0])
+					if err != nil {
+						fetchErr = err
+						return
+					}
+					break
+				}
+			}
+		}
+	}
+	collectURLs := func(e *colly.HTMLElement) {
+		if url := e.ChildAttr("a", "href"); url != "" {
+			mutex.Lock()
+			urls = append(urls, url)
+			mutex.Unlock()
+		}
+	}
+
+	scraper := createCollector(false)
+	scraper.OnResponse(func(r *colly.Response) {
+		directoryURL = strings.Split(r.Request.URL.String(), "?")[0] // post-redirect, no query
+	})
+	scraper.OnHTML("nav.main-pagination", scanPages)
+	scraper.OnHTML("h2.titolo-azz", collectURLs)
+	if fetchErr = scraper.Visit(directoryURL); fetchErr != nil {
+		return nil, fmt.Errorf("page 1 visit failed: %w", fetchErr)
+	}
+
+	if pages > 1 {
+		scraper = createCollector(true)
+		scraper.OnHTML("h2.titolo-azz", collectURLs)
+		for i := 2; i <= pages; i++ {
+			if fetchErr = scraper.Visit(directoryURL + fmt.Sprintf("?%s=%d", pageParam, i)); fetchErr != nil {
+				return nil, fmt.Errorf("page %d visit failed: %w", i, fetchErr)
+			}
+		}
+		scraper.Wait()
+	}
+
+	return urls, nil
+}
+
+// func scrapeCompany(url string) (*model.Company, error) {
 // 	scraper := createCollector()
-// 	urls := make([]string, 0)
-// 	pages := 1
-// 	scraper.OnHTML("nav.main-pagination", func(e *colly.HTMLElement) {
-// 		pageNums := e.DOM.Find("a.page-numbers")
-// 		if pageNums.Length() > 0 {
-// 			n, err := strconv.Atoi(pageNums.Eq(-1).Text())
-// 			if err != nil {
-// 				return
-// 			}
-// 			pages = n
-// 		}
-// 	})
-// 	scraper.OnHTML("h2.titolo-azz", func(e *colly.HTMLElement) {
-// 		if url := e.ChildAttr("a", "href"); url != "" {
-// 			urls = append(urls, url)
-// 		}
-// 	})
-// 	err := scraper.Visit(directoryURL)
-// 	for i := 2; i <= pages; i++ {
-// 		err = scraper.Visit(directoryURL + fmt.Sprintf("?page=%d", i))
-// 	}
-// 	scraper.Wait()
-// 	return urls, err
 // }

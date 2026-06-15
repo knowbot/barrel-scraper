@@ -23,7 +23,7 @@ func main() {
 			w.SetContent(filter.Container)
 		})
 		// fmt.Print(service.FetchURLsDirect("https://www.beverfood.com/importatori/"))
-		service.FetchCompanyUrls("https://www.beverfood.com/indice-imbottigliatori-acque-produttori-soft-drinks/")
+		service.FetchCompanyURLs("https://www.beverfood.com/indice-imbottigliatori-acque-produttori-soft-drinks/")
 		distiller, err = service.NewDistiller()
 		if err != nil {
 			log.Fatal(err)

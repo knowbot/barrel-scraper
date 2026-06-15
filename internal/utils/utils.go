@@ -16,3 +16,15 @@ func CleanText(s string) string {
 		s,
 	)
 }
+
+func RemoveDuplicates[T comparable](slice []T) []T {
+	seen := make(map[T]bool, len(slice))
+	unique := make([]T, 0, len(slice))
+	for _, item := range slice {
+		if !seen[item] {
+			unique = append(unique, item)
+			seen[item] = true
+		}
+	}
+	return unique
+}
